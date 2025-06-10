@@ -26,11 +26,22 @@ else
   }
 end
 
+utility.version = "1.0.0"
 utility.path = arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)") -- inspired by discussion in https://stackoverflow.com/q/6380820
 
--- TODO replace with a version that can handle bad installs..
 utility.require = function(...)
+  -- if libraries adjacent to this one aren't already loadable, make sure they are!
+  if not package.path:find(utility.path, 1, true) then
+    package.path = utility.path .. "?.lua;" .. package.path
+  end
   return require(...)
+end
+
+-- errors if specified program isn't in the path
+utility.required_program = function(name)
+  if os.execute(utility.commands.which .. tostring(name)) ~= 0 then
+    error("\n\n" .. tostring(name) .. " must be installed and in the path\n")
+  end
 end
 
 
@@ -57,7 +68,8 @@ function utility.capture_safe(command, get_status)
   return output
 end
 
-function utility.capture(command)
+-- can hang indefinitely
+function utility.capture_unsafe(command)
   if io.popen then
     local file = assert(io.popen(command, 'r'))
     local output = assert(file:read('*all'))
@@ -68,6 +80,8 @@ function utility.capture(command)
     return utility.capture_safe(command)
   end
 end
+
+utility.capture = utility.capture_safe
 
 
 
@@ -101,14 +115,6 @@ function string.split(s, delimiter)
 end
 
 
-
--- errors if specified program isn't in the path
--- TODO verify this works on Linux / macOS
-utility.required_program = function(name)
-  if os.execute(utility.commands.which .. tostring(name)) ~= 0 then
-    error("\n\n" .. tostring(name) .. " must be installed and in the path\n")
-  end
-end
 
 -- modified from my fork of lume
 utility.uuid = function()
@@ -157,7 +163,7 @@ utility.open = function(file_name, mode)
   end
 end
 
--- run a function based on each file name in a directory
+-- run a function on each file name in a directory
 --   example list items: utility.ls(".")(print)
 utility.ls = function(path)
   local command = utility.commands.list
@@ -214,6 +220,8 @@ utility.save_config = function()
     error("utility config not loaded")
   end
 end
+
+
 
 utility.deepcopy = function(tab)
   local _type = type(tab)
