@@ -36,14 +36,24 @@ end
 
 
 -- always uses outputting to a temporary file to guarantee safety
-function utility.capture_safe(command, tmp_file_name)
-  local file_name = tmp_file_name or utility.tmp_file_name()
-  os.execute(command .. " > " .. file_name)
+function utility.capture_safe(command, get_status)
+  local file_name = utility.tmp_file_name()
+  command = command .. " > " .. file_name
+  if get_status then
+    command = command .. "\necho $? >> " .. file_name
+  end
+  os.execute(command)
 
   local file = io.open(file_name, "r")
   local output = file:read("*all")
   file:close()
   os.execute("rm " .. file_name)
+
+  if get_status then
+    local start, finish = output:find("\n.-\n$")
+    return tonumber(output:sub(start + 1, finish - 1)), output:sub(1, start)
+  end
+
   return output
 end
 
@@ -155,14 +165,11 @@ utility.ls = function(path)
     command = command .. " \"" .. path .. "\""
   end
 
-  local tmp_file_name = utility.tmp_file_name()
-  local output = utility.capture_safe(command, tmp_file_name)
+  local output = utility.capture_safe(command)
 
   return function(fn)
     for line in output:gmatch("[^\r\n]+") do -- thanks to https://stackoverflow.com/a/32847589
-      if line ~= tmp_file_name then -- exclude temporary file name
-        fn(line)
-      end
+      fn(line)
     end
   end
 end
@@ -221,6 +228,14 @@ utility.deepcopy = function(tab)
     copy = tab
   end
   return copy
+end
+
+utility.enumerate = function(list)
+  local result = {}
+  for _, value in ipairs(list) do
+    result[value] = {}
+  end
+  return result
 end
 
 return utility
