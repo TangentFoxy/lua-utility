@@ -156,7 +156,7 @@ utility.ls = function(path)
   end
 
   local tmp_file_name = utility.tmp_file_name()
-  local output = os.capture_safe(command, tmp_file_name)
+  local output = utility.capture_safe(command, tmp_file_name)
 
   return function(fn)
     for line in output:gmatch("[^\r\n]+") do -- thanks to https://stackoverflow.com/a/32847589
