@@ -26,8 +26,9 @@ else
   }
 end
 
-utility.version = "1.0.0"
-utility.path = arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)") -- inspired by discussion in https://stackoverflow.com/q/6380820
+utility.version = "1.1.0"
+-- WARNING: This will return "./" if the original script is called locally instead of with an absolute path!
+utility.path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)")) -- inspired by discussion in https://stackoverflow.com/q/6380820
 
 utility.require = function(...)
   -- if libraries adjacent to this one aren't already loadable, make sure they are!
@@ -38,8 +39,14 @@ utility.require = function(...)
 end
 
 -- errors if specified program isn't in the path
+local _required_program_cache = {}
 utility.required_program = function(name)
-  if os.execute(utility.commands.which .. tostring(name)) ~= 0 then
+  if _required_program_cache[name] then
+    return true
+  end
+  if os.execute(utility.commands.which .. tostring(name)) == 0 then
+    _required_program_cache[name] = true
+  else
     error("\n\n" .. tostring(name) .. " must be installed and in the path\n")
   end
 end
@@ -68,7 +75,7 @@ function utility.capture_safe(command, get_status)
   return output
 end
 
--- can hang indefinitely
+-- can hang indefinitely; not always available
 function utility.capture_unsafe(command)
   if io.popen then
     local file = assert(io.popen(command, 'r'))
@@ -198,7 +205,7 @@ local config
 utility.get_config = function()
   if not config then
     local config_path = utility.path .. "config.json"
-    if utility.exists(config_path) then
+    if utility.file_exists(config_path) then
       utility.open(config_path, "r")(function(config_file)
         local json = utility.require("json")
         config = json.decode(config_file:read("*all"))
@@ -244,6 +251,22 @@ utility.enumerate = function(list)
     result[value] = {}
   end
   return result
+end
+
+-- a super common need I'm encountering is wanting content from a URL without side effects
+utility.curl_read = function(download_url, curl_options)
+  utility.required_program("curl")
+  local tmp_file_name = utility.tmp_file_name()
+  local command = "curl "
+  if curl_options then
+    command = command .. curl_options .. " "
+  end
+  os.execute(command .. download_url:enquote() .. " > " .. tmp_file_name)
+  local file_contents
+  utility.open(tmp_file_name, "r", "Could not download " .. download_url:enquote())(function(file)
+    file_contents = file:read("*all")
+  end)
+  return file_contents
 end
 
 return utility
