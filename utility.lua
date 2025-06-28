@@ -32,7 +32,7 @@ else
   }
 end
 
-utility.version = "1.2.0"
+utility.version = "1.2.1"
 -- WARNING: This will return "./" if the original script is called locally instead of with an absolute path!
 utility.path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)")) -- inspired by discussion in https://stackoverflow.com/q/6380820
 
@@ -342,10 +342,12 @@ end
 
 local _
 _, utility.inspect = pcall(function() return utility.require("inspect") end)
-if type(utility.inspect) == "function" then
+if _ then
   function utility.print_table(tab)
     print(utility.inspect(tab))
   end
+else
+  utility.inspect = nil
 end
 
 
