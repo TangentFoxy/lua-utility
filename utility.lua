@@ -9,8 +9,11 @@ if package.config:sub(1, 1) == "\\" then
     temp_directory = "C:\\Windows\\Temp\\",
     commands = {
       recursive_remove = "rmdir /s /q ",
-      list = "dir /w /b",
+      list = "dir /w /b ",
       which = "where ",
+      move = "move ",
+      silence_output = " >nul 2>nul",
+      silence_errors = " 2>nul",
     },
   }
 else
@@ -20,13 +23,16 @@ else
     temp_directory = "/tmp/",
     commands = {
       recursive_remove = "rm -r ",
-      list = "ls -1",
+      list = "ls -1a ",
       which = "which ",
+      move = "mv ",
+      silence_output = " >/dev/null 2>/dev/null",
+      silence_errors = " 2>/dev/null",
     },
   }
 end
 
-utility.version = "1.1.0"
+utility.version = "1.2.0"
 -- WARNING: This will return "./" if the original script is called locally instead of with an absolute path!
 utility.path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)")) -- inspired by discussion in https://stackoverflow.com/q/6380820
 
@@ -44,7 +50,7 @@ utility.required_program = function(name)
   if _required_program_cache[name] then
     return true
   end
-  if os.execute(utility.commands.which .. tostring(name)) == 0 then
+  if os.execute(utility.commands.which .. tostring(name) .. utility.commands.silence_output) == 0 then
     _required_program_cache[name] = true
   else
     error("\n\n" .. tostring(name) .. " must be installed and in the path\n")
@@ -74,6 +80,7 @@ function utility.capture_safe(command, get_status)
 
   return output
 end
+utility.capture = utility.capture_safe
 
 -- can hang indefinitely; not always available
 function utility.capture_unsafe(command)
@@ -87,8 +94,6 @@ function utility.capture_unsafe(command)
     return utility.capture_safe(command)
   end
 end
-
-utility.capture = utility.capture_safe
 
 
 
@@ -156,17 +161,25 @@ end
 
 -- wrapper around io.open to prevent leaving a file handle open accidentally
 -- throws errors instead of returning them
---   usage: utility.open()(function(file_handle) --[[ your code ]] end)
-utility.open = function(file_name, mode)
+--   usage: utility.open(file_name, mode, function(file) --[[ your code ]] end)
+--       or utility.open(file_name, mode)(function(file_handle) --[[ your code ]] end)
+function utility.open(file_name, mode, func)
   local file, err = io.open(file_name, mode)
   if not file then error(err) end
-  return function(fn)
-    local success, result = pcall(function() return fn(file) end)
+  if func then
+    local success, result = pcall(function() return func(file) end)
     file:close()
-    if not success then
-      error(result)
-    end
+    if not success then error(result) end
     return result
+  else
+    return function(fn)
+      local success, result = pcall(function() return fn(file) end)
+      file:close()
+      if not success then
+        error(result)
+      end
+      return result
+    end
   end
 end
 
@@ -187,9 +200,36 @@ utility.ls = function(path)
   end
 end
 
-utility.file_exists = function(file_name)
+utility.path_exists = function(file_name)
   local file = io.open(file_name, "r")
   if file then file:close() return true else return false end
+end
+function utility.file_exists(file_name)
+  print("WARNING: Use utility.path_exists instead, or utility.is_file to check for a file existing.")
+  return utility.path_exists(file_name)
+end
+
+utility.is_file = function(file_name)
+  local file = io.open(file_name, "r")
+  if file then
+    -- local _, error_message = file:read(1) -- defaults to reading a whole line, so we read 1 byte instead
+    -- file:close()
+    -- if error_message == "Is a directory" then
+    --   return false
+    -- end
+    -- return true
+    local _, error_message = file:read(0)
+    if error_message then
+      return false
+    end
+    return true
+  else
+    return false
+  end
+end
+
+function utility.file_size(file_path)
+  return utility.open(file_path, "rb", function(file) return file:seek("end") end)
 end
 
 utility.escape_quotes_and_escapes = function(input)
@@ -201,13 +241,53 @@ end
 
 
 
-local config
+-- only use for brief loads/saves, as this will block until a lock can be established
+-- returns a UUID that can be checked on release to make sure unforeseen errors did not occur
+function utility.get_lock(file_path)
+  local lock_obtained, lock_uuid, lock_file_path = false, utility.uuid(), file_path .. ".lock"
+  repeat
+    if not utility.file_exists(lock_file_path) then
+      pcall(function()
+        utility.open(lock_file_path, "w")(function(file)
+          file:write(lock_uuid)
+        end)
+        utility.open(lock_file_path, "r")(function(file)
+          if file:read("*all") == lock_uuid then
+            lock_obtained = true
+          end
+        end)
+      end)
+    end
+    if not lock_obtained then
+      os.execute("sleep 1")
+    end
+  until lock_obtained
+  return lock_uuid
+end
+
+-- specifying lock_uuid is optional, to error if a conflict occurred despite the lock (should not be possible)
+function utility.release_lock(file_path, lock_uuid)
+  local lock_file_path = file_path .. ".lock"
+  if lock_uuid then
+    utility.open(lock_file_path, "r")(function(file)
+      if not file:read("*all") == lock_uuid then
+        error("\n\n Lock UUID changed while lock was obtained. Data loss may have occurred. \n\n")
+      end
+    end)
+  end
+  os.execute("rm " .. lock_file_path:enquote())
+end
+
+
+
+local config, config_lock
 utility.get_config = function()
   if not config then
     local config_path = utility.path .. "config.json"
     if utility.file_exists(config_path) then
+      config_lock = utility.get_lock(config_path)
       utility.open(config_path, "r")(function(config_file)
-        local json = utility.require("json")
+        local json = utility.require("dkjson")
         config = json.decode(config_file:read("*all"))
       end)
     else
@@ -219,10 +299,17 @@ end
 
 utility.save_config = function()
   if config then
-    utility.open(utility.path .. "config.json", "w")(function(config_file)
-      local json = utility.require("json")
-      config_file:write(json.encode(config))
+    local config_path = utility.path .. "config.json"
+    if not config_lock then
+      print("Warning: A config lock file was not established.")
+    end
+    utility.open(config_path, "w")(function(config_file)
+      local json = utility.require("dkjson")
+      config_file:write(json.encode(config, { indent = true }))
     end)
+    if config_lock then
+      utility.release_lock(config_path, config_lock)
+    end
   else
     error("utility config not loaded")
   end
@@ -252,6 +339,16 @@ utility.enumerate = function(list)
   end
   return result
 end
+
+local _
+_, utility.inspect = pcall(function() return utility.require("inspect") end)
+if type(utility.inspect) == "function" then
+  function utility.print_table(tab)
+    print(utility.inspect(tab))
+  end
+end
+
+
 
 -- a super common need I'm encountering is wanting content from a URL without side effects
 utility.curl_read = function(download_url, curl_options)
