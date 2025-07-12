@@ -345,7 +345,22 @@ if _ then
   end
 else
   utility.inspect = nil
-  -- TODO make alternate print_table available
+  -- much simpler (and worse) print_table as fallback
+  utility.print_table = function(tab, depth)
+    depth = depth or 0
+    if type(tab) == "table" then
+      for k, v in pairs(tab) do
+        print(string.rep("  ", depth) .. tostring(k) .. ":")
+        if type(v) == "table" then
+          utility.print_table(v, depth + 1)
+        else
+          print(string.rep("  ", depth + 1) .. tostring(v))
+        end
+      end
+    else
+      print(string.rep("  ", depth) .. tostring(tab))
+    end
+  end
 end
 
 
