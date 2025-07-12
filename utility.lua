@@ -32,7 +32,7 @@ else
   }
 end
 
-utility.version = "1.2.1-modified"
+utility.version = "1.2.2"
 -- WARNING: This will return "./" if the original script is called locally instead of with an absolute path!
 utility.path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)")) -- inspired by discussion in https://stackoverflow.com/q/6380820
 
@@ -143,6 +143,8 @@ utility.tmp_file_name = function()
   return utility.temp_directory .. utility.uuid()
 end
 
+
+
 -- while I could replace this with a better implementation, I'm used to how it works and I might break existing scripts
 utility.make_safe_file_name = function(file_name)
   file_name = file_name:gsub("[%\"%:%\\%!%@%#%$%%%^%*%=%{%}%|%;%<%>%?%/]", "") -- everything except the &
@@ -162,7 +164,7 @@ end
 
 -- wrapper around io.open to prevent leaving a file handle open accidentally
 -- throws errors instead of returning them
---   usage: utility.open(file_name, mode, function(file) --[[ your code ]] end)
+--   usage: utility.open(file_name, mode, function(file_handle) --[[ your code ]] end)
 --       or utility.open(file_name, mode)(function(file_handle) --[[ your code ]] end)
 utility.open = function(file_name, mode, func)
   local file, err = io.open(file_name, mode)
@@ -185,8 +187,8 @@ utility.open = function(file_name, mode, func)
 end
 
 -- run a function on each file name in a directory
---   example list items: utility.ls(".")(print)
-utility.ls = function(path)
+--   example list items: utility.ls(".", print)  OR  utility.ls(".")(print)
+utility.ls = function(path, func)
   local command = utility.commands.list
   if path then
     command = command .. " \"" .. path .. "\""
@@ -194,10 +196,16 @@ utility.ls = function(path)
 
   local output = utility.capture_safe(command)
 
-  return function(fn)
+  local run = function(fn)
     for line in output:gmatch("[^\r\n]+") do -- thanks to https://stackoverflow.com/a/32847589
       fn(line)
     end
+  end
+
+  if func then
+    run(func)
+  else
+    return run
   end
 end
 
@@ -228,6 +236,8 @@ end
 utility.file_size = function(file_path)
   return utility.open(file_path, "rb", function(file) return file:seek("end") end)
 end
+
+
 
 utility.escape_quotes_and_escapes = function(input)
   -- the order of these commands is important and must be preserved
@@ -332,7 +342,7 @@ end
 utility.enumerate = function(list)
   local result = {}
   for _, value in ipairs(list) do
-    result[value] = {}
+    result[value] = { name = value }
   end
   return result
 end
