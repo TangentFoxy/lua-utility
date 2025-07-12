@@ -60,7 +60,7 @@ end
 
 
 -- always uses outputting to a temporary file to guarantee safety
-function utility.capture_safe(command, get_status)
+utility.capture_safe = function(command, get_status)
   local file_name = utility.tmp_file_name()
   command = command .. " > " .. file_name
   if get_status then
@@ -82,7 +82,7 @@ function utility.capture_safe(command, get_status)
 end
 
 -- can hang indefinitely; not always available
-function utility.capture_unsafe(command)
+utility.capture_unsafe = function(command)
   if io.popen then
     local file = assert(io.popen(command, 'r'))
     local output = assert(file:read('*all'))
@@ -164,7 +164,7 @@ end
 -- throws errors instead of returning them
 --   usage: utility.open(file_name, mode, function(file) --[[ your code ]] end)
 --       or utility.open(file_name, mode)(function(file_handle) --[[ your code ]] end)
-function utility.open(file_name, mode, func)
+utility.open = function(file_name, mode, func)
   local file, err = io.open(file_name, mode)
   if not file then error(err) end
   if func then
@@ -205,7 +205,8 @@ utility.path_exists = function(file_name)
   local file = io.open(file_name, "r")
   if file then file:close() return true else return false end
 end
-function utility.file_exists(file_name)
+-- WARNING DEPRECATED
+utility.file_exists = function(file_name)
   print("WARNING: Use utility.path_exists instead, or utility.is_file to check for a file existing.")
   return utility.path_exists(file_name)
 end
@@ -224,7 +225,7 @@ utility.is_file = function(file_name)
   end
 end
 
-function utility.file_size(file_path)
+utility.file_size = function(file_path)
   return utility.open(file_path, "rb", function(file) return file:seek("end") end)
 end
 
@@ -239,7 +240,7 @@ end
 
 -- only use for brief loads/saves, as this will block until a lock can be established
 -- returns a UUID that can be checked on release to make sure unforeseen errors did not occur
-function utility.get_lock(file_path)
+utility.get_lock = function(file_path)
   local lock_obtained, lock_uuid, lock_file_path = false, utility.uuid(), file_path .. ".lock"
   repeat
     if not utility.file_exists(lock_file_path) then
@@ -262,7 +263,7 @@ function utility.get_lock(file_path)
 end
 
 -- specifying lock_uuid is optional, to error if a conflict occurred despite the lock (should not be possible)
-function utility.release_lock(file_path, lock_uuid)
+utility.release_lock = function(file_path, lock_uuid)
   local lock_file_path = file_path .. ".lock"
   if lock_uuid then
     utility.open(lock_file_path, "r")(function(file)
@@ -339,11 +340,12 @@ end
 local _
 _, utility.inspect = pcall(function() return utility.require("inspect") end)
 if _ then
-  function utility.print_table(tab)
+  utility.print_table = function(tab)
     print(utility.inspect(tab))
   end
 else
   utility.inspect = nil
+  -- TODO make alternate print_table available
 end
 
 
