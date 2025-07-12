@@ -32,7 +32,7 @@ else
   }
 end
 
-utility.version = "1.2.1"
+utility.version = "1.2.1-modified"
 -- WARNING: This will return "./" if the original script is called locally instead of with an absolute path!
 utility.path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)")) -- inspired by discussion in https://stackoverflow.com/q/6380820
 
@@ -80,7 +80,6 @@ function utility.capture_safe(command, get_status)
 
   return output
 end
-utility.capture = utility.capture_safe
 
 -- can hang indefinitely; not always available
 function utility.capture_unsafe(command)
@@ -94,6 +93,8 @@ function utility.capture_unsafe(command)
     return utility.capture_safe(command)
   end
 end
+
+utility.capture = utility.capture_safe
 
 
 
@@ -213,7 +214,8 @@ utility.is_file = function(file_name)
   local file = io.open(file_name, "r")
   if file then
     local _, error_message = file:read(0)
-    if error_message then
+    file:close()
+    if error_message == "Is a directory" then
       return false
     end
     return true
@@ -356,7 +358,7 @@ utility.curl_read = function(download_url, curl_options)
   end
   os.execute(command .. download_url:enquote() .. " > " .. tmp_file_name)
   local file_contents
-  utility.open(tmp_file_name, "r", "Could not download " .. download_url:enquote())(function(file)
+  utility.open(tmp_file_name, "r")(function(file)
     file_contents = file:read("*all")
   end)
   return file_contents
