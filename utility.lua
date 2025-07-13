@@ -32,7 +32,7 @@ else
   }
 end
 
-utility.version = "1.2.2"
+utility.version = "1.2.3"
 -- WARNING: This will return "./" if the original script is called locally instead of with an absolute path!
 utility.path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)")) -- inspired by discussion in https://stackoverflow.com/q/6380820
 
@@ -80,6 +80,11 @@ utility.capture_safe = function(command, get_status)
 
   return output
 end
+-- WARNING DEPRECATED
+utility.capture = function(...)
+  print("WARNING: Use utility.capture_safe or utility.capture_unsafe. This function will be removed.")
+  return utility.capture_safe(...)
+end
 
 -- can hang indefinitely; not always available
 utility.capture_unsafe = function(command)
@@ -93,8 +98,6 @@ utility.capture_unsafe = function(command)
     return utility.capture_safe(command)
   end
 end
-
-utility.capture = utility.capture_safe
 
 
 
@@ -191,7 +194,7 @@ end
 utility.ls = function(path, func)
   local command = utility.commands.list
   if path then
-    command = command .. " \"" .. path .. "\""
+    command = command .. path:enquote()
   end
 
   local output = utility.capture_safe(command)
@@ -214,9 +217,9 @@ utility.path_exists = function(file_name)
   if file then file:close() return true else return false end
 end
 -- WARNING DEPRECATED
-utility.file_exists = function(file_name)
+utility.file_exists = function(...)
   print("WARNING: Use utility.path_exists instead, or utility.is_file to check for a file existing.")
-  return utility.path_exists(file_name)
+  return utility.path_exists(...)
 end
 
 utility.is_file = function(file_name)
@@ -253,12 +256,12 @@ end
 utility.get_lock = function(file_path)
   local lock_obtained, lock_uuid, lock_file_path = false, utility.uuid(), file_path .. ".lock"
   repeat
-    if not utility.file_exists(lock_file_path) then
+    if not utility.is_file(lock_file_path) then
       pcall(function()
-        utility.open(lock_file_path, "w")(function(file)
+        utility.open(lock_file_path, "w", function(file)
           file:write(lock_uuid)
         end)
-        utility.open(lock_file_path, "r")(function(file)
+        utility.open(lock_file_path, "r", function(file)
           if file:read("*all") == lock_uuid then
             lock_obtained = true
           end
@@ -276,7 +279,7 @@ end
 utility.release_lock = function(file_path, lock_uuid)
   local lock_file_path = file_path .. ".lock"
   if lock_uuid then
-    utility.open(lock_file_path, "r")(function(file)
+    utility.open(lock_file_path, "r", function(file)
       if not file:read("*all") == lock_uuid then
         error("\n\n Lock UUID changed while lock was obtained. Data loss may have occurred. \n\n")
       end
@@ -291,9 +294,9 @@ local config, config_lock
 utility.get_config = function()
   if not config then
     local config_path = utility.path .. "config.json"
-    if utility.file_exists(config_path) then
+    if utility.is_file(config_path) then
       config_lock = utility.get_lock(config_path)
-      utility.open(config_path, "r")(function(config_file)
+      utility.open(config_path, "r", function(config_file)
         local json = utility.require("dkjson")
         config = json.decode(config_file:read("*all"))
       end)
@@ -310,7 +313,7 @@ utility.save_config = function()
     if not config_lock then
       print("Warning: A config lock file was not established.")
     end
-    utility.open(config_path, "w")(function(config_file)
+    utility.open(config_path, "w", function(config_file)
       local json = utility.require("dkjson")
       config_file:write(json.encode(config, { indent = true }))
     end)
@@ -385,7 +388,7 @@ utility.curl_read = function(download_url, curl_options)
   end
   os.execute(command .. download_url:enquote() .. " > " .. tmp_file_name)
   local file_contents
-  utility.open(tmp_file_name, "r")(function(file)
+  utility.open(tmp_file_name, "r", function(file)
     file_contents = file:read("*all")
   end)
   return file_contents

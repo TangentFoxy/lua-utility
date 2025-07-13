@@ -66,3 +66,7 @@ If a `config.json` file is present next to utility, and the `dkjson` library is 
 
 ## Networking
 - `curl_read(url, curl_options)`: Returns a string of the page obtained from `url` via `curl` command. `curl_options` is passed raw to `curl` if present.
+
+---
+
+I did accidentally change the programming interface of this library without updating the major version number, but this was before writing documentation, and certainly before anyone else may have used it, so I am not bumping the version number just for that. However, if I make the same mistake in the future, I will correct it with a patch to the existing major version number as a final patch before bumping the major version number.
