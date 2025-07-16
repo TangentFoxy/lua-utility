@@ -32,7 +32,7 @@ else
   }
 end
 
-utility.version = "1.2.3"
+utility.version = "1.3.0"
 -- WARNING: This will return "./" if the original script is called locally instead of with an absolute path!
 utility.path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)")) -- inspired by discussion in https://stackoverflow.com/q/6380820
 
@@ -373,6 +373,12 @@ else
     else
       print(string.rep("  ", depth) .. tostring(tab))
     end
+  end
+end
+
+utility.list_reverse = function(tab)
+  for i = 1, math.floor(#tab/2) do
+    tab[i], tab[#tab-i+1] = tab[#tab-i+1], tab[i]
   end
 end
 
