@@ -43,8 +43,8 @@ When required, `math.randomseed(os.time())` is called.
 - `utility.ls(path, func)`: Executes `func` on all file names within a path. If `func` not specified, returns a function to call with your function to run your function later (the list will be generated immediately though).
 - `utility.path_exists(path)`: Checks if a path exists (can be opened as a file).
 - `utility.file_exists(path)`: DEPRECATED. Same as `utility.path_exists`, mistakenly thought it only opened writable files.
-- `utility.is_file(path)`: Returns `true` only for *writable* files, `false` for everything else. (**Note**: It is possible this can return `true` in rare cases where it shouldn't.)
-- `utility.file_size(path)`: Returns file size in bytes. (**Note**: I believe this can return values for directories and other special files..)
+- `utility.is_file(path)`: Returns `true` only for *writable* files, `false` for everything else. (**Note**: It is possible this can return `true` in rare cases where it shouldn't. See issue [#14](https://github.com/TangentFoxy/lua-utility/issues/14).)
+- `utility.file_size(path)`: Returns file size in bytes. (**Note**: This does return values for directories and other special files..)
 
 ### File Locks
 - `utility.get_lock(path)`: Blocks until a lock can be established. Cooperative locking. Returns a UUID that can be checked on release to catch *some* errors.
