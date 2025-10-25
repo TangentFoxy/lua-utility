@@ -3,7 +3,7 @@ I keep needing the same basic functions over and over in again in Lua projects..
 
 When required, `math.randomseed(os.time())` is called.
 
-## Standard Library Modifications
+## Standard Library Additions
 - `string.trim(s)`: Trims whitespace on both ends of a string.
 - `string.enquote(s)`: Adds double quotes around a string, and escapes any double quotes within it.
 - `string.split(s, delimiter)`: Returns list of split substrings.
