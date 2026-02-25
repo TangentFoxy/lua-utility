@@ -1,7 +1,7 @@
 # lua-utility
 I keep needing the same basic functions over and over in again in Lua projects..
 
-When required, `math.randomseed(os.time())` is called.
+When this library is `require`'d, `math.randomseed(os.time())` is called.
 
 ## Standard Library Additions
 - `string.trim(s)`: Trims whitespace on both ends of a string.
@@ -40,7 +40,8 @@ When required, `math.randomseed(os.time())` is called.
 - `utility.make_safe_file_name(name)`: Overzealous string modification to make something that should be safe to use across systems.
 - `utility.split_path_components(path)`: Returns path, file name, and extension. Extension can be `nil`, file name will contain the extension if present.
 - `utility.open(name, mode, func)`: Opens a file and executes `func` on its file handle. Guarantees file handles are closed. If `func` not specified, returns a function to call with your function to run your function later (the file is opened immediately though).
-- `utility.ls(path, func)`: Executes `func` on all file names within a path. If `func` not specified, returns a function to call with your function to run your function later (the list will be generated immediately though).
+- `utility.list(path, func)`: Executes `func` on all file names within a path. If `func` not specified, returns a function to call with your function to run your function later (the list will be generated immediately though).
+- `utility.ls` is an alias to `utility.list`. (DEPRECATED)
 - `utility.path_exists(path)`: Checks if a path exists (can be opened as a file).
 - `utility.file_exists(path)`: DEPRECATED. Same as `utility.path_exists`, mistakenly thought it only opened writable files.
 - `utility.is_file(path)`: Returns `true` only for *writable* files, `false` for everything else. (**Note**: It is possible this can return `true` in rare cases where it shouldn't. See issue [#14](https://github.com/TangentFoxy/lua-utility/issues/14).)

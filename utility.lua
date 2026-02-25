@@ -190,8 +190,8 @@ utility.open = function(file_name, mode, func)
 end
 
 -- run a function on each file name in a directory
---   example list items: utility.ls(".", print)  OR  utility.ls(".")(print)
-utility.ls = function(path, func)
+--   example list items: utility.list(".", print)  OR  utility.list(".")(print)
+utility.list = function(path, func)
   local command = utility.commands.list
   if path then
     command = command .. path:enquote()
@@ -201,7 +201,9 @@ utility.ls = function(path, func)
 
   local run = function(fn)
     for line in output:gmatch("[^\r\n]+") do -- thanks to https://stackoverflow.com/a/32847589
-      fn(line)
+      if not (line == "." or line == "..") then
+        fn(line)
+      end
     end
   end
 
@@ -210,6 +212,11 @@ utility.ls = function(path, func)
   else
     return run
   end
+end
+-- WARNING DEPRECATED
+utility.ls = function(...)
+  print("WARNING: Use utility.list. This function will be removed.")
+  return utility.list(...)
 end
 
 utility.path_exists = function(file_name)
