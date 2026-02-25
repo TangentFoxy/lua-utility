@@ -32,7 +32,7 @@ else
   }
 end
 
-utility.version = "1.3.0"
+utility.version = "1.4.0"
 -- WARNING: This will return "./" if the original script is called locally instead of with an absolute path!
 if arg[0] ~= nil then
   utility.path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)")) -- inspired by discussion in https://stackoverflow.com/q/6380820
@@ -246,15 +246,14 @@ end
 utility.is_file = function(file_name)
   local file = io.open(file_name, "r")
   if file then
-    local _, error_message = file:read(0)
     file:close()
-    if error_message == "Is a directory" then
-      return false
+    file = io.open(file_name, "a")
+    if file then
+      file:close()
+      return true
     end
-    return true
-  else
-    return false
   end
+  return false
 end
 
 utility.file_size = function(file_path)

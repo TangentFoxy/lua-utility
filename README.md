@@ -45,7 +45,7 @@ If these are already defined, a warning will be printed about possible conflicti
 - `utility.ls` is an alias to `utility.list`. (DEPRECATED)
 - `utility.path_exists(path)`: Checks if a path exists (can be opened as a file).
 - `utility.file_exists(path)`: DEPRECATED. Same as `utility.path_exists`, mistakenly thought it only opened writable files.
-- `utility.is_file(path)`: Returns `true` only for *writable* files, `false` for everything else. (**Note**: It is possible this can return `true` in rare cases where it shouldn't. See issue [#14](https://github.com/TangentFoxy/lua-utility/issues/14).)
+- `utility.is_file(path)`: Returns `true` only for *writable* files, `false` for everything else.
 - `utility.file_size(path)`: Returns file size in bytes. (**Note**: This does return values for directories and other special files..)
 
 ### File Locks
