@@ -105,16 +105,34 @@ end
 
 
 
+local function standard_library_addition(tab, name, func)
+  if tab[name] then
+    print("WARNING: " .. tab .. "." .. name .. " was defined by another library. lua-utility may encounter errors due to a differing implementation.")
+  else
+    tab[name] = func
+  end
+end
+
+
+
 -- trim6 from Lua users wiki (best all-round pure Lua performance)
-function string.trim(s)
+standard_library_addition(string, "trim", function(s)
   return s:match'^()%s*$' and '' or s:match'^%s*(.*%S)'
-end
+end)
 
-function string.enquote(s)
+standard_library_addition(string, "enquote", function(s)
   return "\"" .. s:gsub("\"", "\\\"") .. "\""
-end
+end)
 
-function string.gsplit(s, delimiter)
+standard_library_addition(string, "split", function(s, delimiter)
+  local result = {}
+  for item in s:gsplit(delimiter) do
+    result[#result + 1] = item
+  end
+  return result
+end)
+
+standard_library_addition(string, "gsplit", function(s, delimiter)
   local function escape_special_characters(s)
     local special_characters = "[()%%.[^$%]*+%-?]"
     if s == nil then return end
@@ -124,15 +142,7 @@ function string.gsplit(s, delimiter)
   delimiter = delimiter or ","
   if s:sub(-#delimiter) ~= delimiter then s = s .. delimiter end
   return s:gmatch("(.-)" .. escape_special_characters(delimiter))
-end
-
-function string.split(s, delimiter)
-  local result = {}
-  for item in s:gsplit(delimiter) do
-    result[#result + 1] = item
-  end
-  return result
-end
+end)
 
 
 

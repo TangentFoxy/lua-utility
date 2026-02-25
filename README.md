@@ -4,6 +4,7 @@ I keep needing the same basic functions over and over in again in Lua projects..
 When this library is `require`'d, `math.randomseed(os.time())` is called.
 
 ## Standard Library Additions
+If these are already defined, a warning will be printed about possible conflicting implementations.
 - `string.trim(s)`: Trims whitespace on both ends of a string.
 - `string.enquote(s)`: Adds double quotes around a string, and escapes any double quotes within it.
 - `string.split(s, delimiter)`: Returns list of split substrings.
