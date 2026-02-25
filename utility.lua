@@ -280,6 +280,7 @@ utility.get_lock = function(file_path)
       end)
     end
     if not lock_obtained then
+      print("Trying to obtain file lock: " .. lock_file_path)
       os.execute("sleep 1")
     end
   until lock_obtained
@@ -302,11 +303,13 @@ end
 
 
 local config, config_lock
-utility.get_config = function()
+utility.get_config = function(skip_lock)
   if not config then
     local config_path = utility.path .. "config.json"
     if utility.is_file(config_path) then
-      config_lock = utility.get_lock(config_path)
+      if not skip_lock then
+        config_lock = utility.get_lock(config_path)
+      end
       utility.open(config_path, "r", function(config_file)
         local json = utility.require("dkjson")
         config = json.decode(config_file:read("*all"))

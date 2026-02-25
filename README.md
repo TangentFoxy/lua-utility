@@ -56,7 +56,7 @@ When this library is `require`'d, `math.randomseed(os.time())` is called.
 
 ## Config File
 If a `config.json` file is present next to utility, and the `dkjson` library is present, it can be loaded and saved through utility. So far, I have used this to store sensitive data in other repos, so `config.json` often should be included in `.gitignore` files or otherwise protected.
-- `utility.get_config()`: Returns config table.
+- `utility.get_config(skip_lock)`: Returns config table. If `skip_lock` is truthy, a lock will not be obtained (intended for read-only access).
 - `utility.save_config()`: Saves config table. (Any changes you make *must not replace* the config table, or saving will fail, as this state is kept by utility itself.)
 
 ## Table Handling
