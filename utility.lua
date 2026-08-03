@@ -124,14 +124,6 @@ standard_library_addition(string, "enquote", function(s)
   return "\"" .. s:gsub("\"", "\\\"") .. "\""
 end)
 
-standard_library_addition(string, "split", function(s, delimiter)
-  local result = {}
-  for item in s:gsplit(delimiter) do
-    result[#result + 1] = item
-  end
-  return result
-end)
-
 standard_library_addition(string, "gsplit", function(s, delimiter)
   local function escape_special_characters(s)
     local special_characters = "[()%%.[^$%]*+%-?]"
@@ -142,6 +134,14 @@ standard_library_addition(string, "gsplit", function(s, delimiter)
   delimiter = delimiter or ","
   if s:sub(-#delimiter) ~= delimiter then s = s .. delimiter end
   return s:gmatch("(.-)" .. escape_special_characters(delimiter))
+end)
+
+standard_library_addition(string, "split", function(s, delimiter)
+  local result = {}
+  for item in s:gsplit(delimiter) do
+    result[#result + 1] = item
+  end
+  return result
 end)
 
 
