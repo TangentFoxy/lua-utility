@@ -348,6 +348,39 @@ utility.save_config = function()
   end
 end
 
+local data_file_locations = {}
+utility.load_data = function(file_path)
+  local data = utility.open(file_path, "r", function(data_file)
+    local json = utility.require("dkjson")
+    return json.decode(data_file:read("*all"))
+  end)
+  data_file_locations[data] = file_path
+  return data
+end
+
+utility.save_data = function(data)
+  local keys, loop = {}
+  loop = function(tab)
+    if type(tab) == "table" then
+      for k,v in pairs(tab) do
+        keys[k] = true
+        loop(v)
+      end
+    end
+  end
+  loop()
+  local order = {}
+  for k in pairs(keys) do order[#order + 1] = k end
+  table.sort(order)
+
+  local file_path = data_file_locations[data]
+  utility.open(file_path, "w", function(data_file)
+    local json = utility.require("dkjson")
+    data_file:write(json.encode(data, { indent = true, keyorder = order, }))
+    data_file:write("\n")
+  end)
+end
+
 
 
 utility.deepcopy = function(tab)
