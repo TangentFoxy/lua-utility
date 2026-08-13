@@ -301,7 +301,7 @@ utility.release_lock = function(file_path, lock_uuid)
   local lock_file_path = file_path .. ".lock"
   if lock_uuid then
     utility.open(lock_file_path, "r", function(file)
-      if not file:read("*all") == lock_uuid then
+      if not (file:read("*all") == lock_uuid) then
         error("\n\n Lock UUID changed while lock was obtained. Data loss may have occurred. \n\n")
       end
     end)
