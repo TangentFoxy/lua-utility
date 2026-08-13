@@ -52,6 +52,11 @@ If these are already defined, a warning will be printed about possible conflicti
 - `utility.get_lock(path)`: Blocks until a lock can be established. Cooperative locking. Returns a UUID that can be checked on release to catch *some* errors.
 - `utility.release_lock(path, uuid)`: Releases a lock. If UUID is specified, will error if the lock was violated (but this can only check for errors with utility's locking mechanism).
 
+### JSON
+Requires `dkjson` library present.
+- `utility.load_data(path)`: Returns object from the specified JSON file.
+- `utility.save_data(data, path)`: Saves an object to JSON. Assuming it was loaded by `utility.load_data`, `path` is optional (it will save to where it was loaded from automatically).
+
 ## String Handling
 - `utility.escape_quotes_and_escapes(s)`: Escapes backslashes and quotes in a string.
 

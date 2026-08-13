@@ -32,7 +32,7 @@ else
   }
 end
 
-utility.version = "1.4.0"
+utility.version = "1.5.0"
 -- WARNING: This will return "./" if the original script is called locally instead of with an absolute path!
 if arg[0] ~= nil then
   utility.path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)")) -- inspired by discussion in https://stackoverflow.com/q/6380820
@@ -348,12 +348,45 @@ utility.save_config = function()
   end
 end
 
+local data_file_locations = {}
+utility.load_data = function(file_path)
+  local data = utility.open(file_path, "r", function(data_file)
+    local json = utility.require("dkjson")
+    return json.decode(data_file:read("*all"))
+  end)
+  data_file_locations[data] = file_path
+  return data
+end
+
+utility.save_data = function(data, file_path)
+  local keys, loop = {}
+  loop = function(tab)
+    if type(tab) == "table" then
+      for k,v in pairs(tab) do
+        keys[k] = true
+        loop(v)
+      end
+    end
+  end
+  loop()
+  local order = {}
+  for k in pairs(keys) do order[#order + 1] = k end
+  table.sort(order)
+
+  file_path = file_path or data_file_locations[data]
+  assert(file_path, "The object must have been loaded by utility.load_data or you must pass a path as the second argument.")
+  utility.open(file_path, "w", function(data_file)
+    local json = utility.require("dkjson")
+    data_file:write(json.encode(data, { indent = true, keyorder = order, }))
+    data_file:write("\n")
+  end)
+end
+
 
 
 utility.deepcopy = function(tab)
-  local _type = type(tab)
   local copy
-  if _type == "table" then
+  if type(tab) == "table" then
     copy = {}
     for key, value in next, tab, nil do
       copy[utility.deepcopy(key)] = utility.deepcopy(value)
