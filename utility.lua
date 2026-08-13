@@ -32,7 +32,7 @@ else
   }
 end
 
-utility.version = "1.5.1"
+utility.version = "1.5.2"
 -- WARNING: This will return "./" if the original script is called locally instead of with an absolute path!
 if arg[0] ~= nil then
   utility.path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)")) -- inspired by discussion in https://stackoverflow.com/q/6380820
@@ -363,14 +363,14 @@ utility.save_data = function(data, file_path)
   loop = function(tab)
     if type(tab) == "table" then
       for k,v in pairs(tab) do
-        keys[k] = true
+        if not (type(k) == "number") then
+          keys[k] = true
+        end
         loop(v)
       end
-    else
-      keys[tab] = true
     end
   end
-  loop()
+  loop(data)
   local order = {}
   for k in pairs(keys) do order[#order + 1] = k end
   table.sort(order)
