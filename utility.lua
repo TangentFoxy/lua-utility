@@ -358,7 +358,7 @@ utility.load_data = function(file_path)
   return data
 end
 
-utility.save_data = function(data)
+utility.save_data = function(data, file_path)
   local keys, loop = {}
   loop = function(tab)
     if type(tab) == "table" then
@@ -373,7 +373,8 @@ utility.save_data = function(data)
   for k in pairs(keys) do order[#order + 1] = k end
   table.sort(order)
 
-  local file_path = data_file_locations[data]
+  local file_path = file_path or data_file_locations[data]
+  assert(file_path, "The object must have been loaded by utility.load_data or you must pass a path as the second argument.")
   utility.open(file_path, "w", function(data_file)
     local json = utility.require("dkjson")
     data_file:write(json.encode(data, { indent = true, keyorder = order, }))
