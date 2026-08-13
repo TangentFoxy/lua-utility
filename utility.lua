@@ -32,7 +32,7 @@ else
   }
 end
 
-utility.version = "1.5.0"
+utility.version = "1.5.1"
 -- WARNING: This will return "./" if the original script is called locally instead of with an absolute path!
 if arg[0] ~= nil then
   utility.path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)")) -- inspired by discussion in https://stackoverflow.com/q/6380820
@@ -366,6 +366,8 @@ utility.save_data = function(data, file_path)
         keys[k] = true
         loop(v)
       end
+    else
+      keys[tab] = true
     end
   end
   loop()
