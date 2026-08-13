@@ -3,6 +3,13 @@ I keep needing the same basic functions over and over in again in Lua projects..
 
 When this library is `require`'d, `math.randomseed(os.time())` is called.
 
+Usage:
+```lua
+#!/usr/bin/env luajit
+package.path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)")) .. "lib" .. package.config:sub(1, 1) .. "?.lua;" .. package.path
+local utility = require "utility"
+```
+
 ## Standard Library Additions
 If these are already defined, a warning will be printed about possible conflicting implementations.
 - `string.trim(s)`: Trims whitespace on both ends of a string.
