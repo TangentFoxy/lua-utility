@@ -14,8 +14,8 @@ local utility = require "utility"
 If these are already defined, a warning will be printed about possible conflicting implementations.
 - `string.trim(s)`: Trims whitespace on both ends of a string.
 - `string.enquote(s)`: Adds double quotes around a string, and escapes any double quotes within it.
-- `string.split(s, delimiter)`: Returns list of split substrings.
 - `string.gsplit(s, delimiter)`: Split string as an iterator.
+- `string.split(s, delimiter)`: Returns list of split substrings.
 
 ## Constants
 - `OS`: `Windows` or `UNIX-like` based on detected path separator.
@@ -55,31 +55,35 @@ If these are already defined, a warning will be printed about possible conflicti
 - `utility.is_file(path)`: Returns `true` only for *writable* files, `false` for everything else.
 - `utility.file_size(path)`: Returns file size in bytes. (**Note**: This does return values for directories and other special files..)
 
+## String Handling
+- `utility.escape_quotes_and_escapes(s)`: Escapes backslashes and quotes in a string.
+
 ### File Locks
 - `utility.get_lock(path)`: Blocks until a lock can be established. Cooperative locking. Returns a UUID that can be checked on release to catch *some* errors.
 - `utility.release_lock(path, uuid)`: Releases a lock. If UUID is specified, will error if the lock was violated (but this can only check for errors with utility's locking mechanism).
-
-### JSON
-Requires `dkjson` library present.
-- `utility.load_data(path)`: Returns object from the specified JSON file.
-- `utility.save_data(data, path)`: Saves an object to JSON. Assuming it was loaded by `utility.load_data`, `path` is optional (it will save to where it was loaded from automatically).
-
-## String Handling
-- `utility.escape_quotes_and_escapes(s)`: Escapes backslashes and quotes in a string.
 
 ## Config File
 If a `config.json` file is present next to utility, and the `dkjson` library is present, it can be loaded and saved through utility. So far, I have used this to store sensitive data in other repos, so `config.json` often should be included in `.gitignore` files or otherwise protected.
 - `utility.get_config(skip_lock)`: Returns config table. If `skip_lock` is truthy, a lock will not be obtained (intended for read-only access).
 - `utility.save_config()`: Saves config table. (Any changes you make *must not replace* the config table, or saving will fail, as this state is kept by utility itself.)
 
+### JSON
+Requires `dkjson` library present.
+- `utility.load_data(path)`: Returns object from the specified JSON file.
+- `utility.save_data(data, path)`: Saves an object to JSON. Assuming it was loaded by `utility.load_data`, `path` is optional (it will save to where it was loaded from automatically).
+
 ## Table Handling
 - `utility.deepcopy(table)`: Copies a table, handling any recursion present, and making sure metatables are copied as well.
 - `utility.enumerate(list)`: Creates unique values using empty tables for each named item in the list. The named value for each enumeration is stored within it as `name` for debugging purposes. (Tables are used to discourage lazy interaction with the enumeration by avoiding integer keys. This also makes it more difficult to confuse enumeration values with something else.)
 - `utility.inspect(table)`: Kikito's `inspect` library will be automatically loaded here if present.
 - `utility.print_table(table)`: Using Kikito's `inspect`, or a fallback, will print a table's contents.
+- `utility.list_reverse(table)`: In-place reversal of the integer-indexed keys of a table. (Cannot handle sparse arrays.)
 
 ## Networking
 - `curl_read(url, curl_options)`: Returns a string of the page obtained from `url` via `curl` command. `curl_options` is passed raw to `curl` if present.
+
+## AI
+- `llm_prompt(text, model)`: Uses `ollama` binary to run local LLMs. Default model can be specified in `config.ollama.default_model`, and will otherwise default to `gemma4:12b-mlx`. Returns text and reasoning (as separate values, reasoning will be `nil` if it wasn't present).
 
 ---
 
